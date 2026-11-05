@@ -5,7 +5,7 @@ Trabajo Práctico Final — Tecnología Java (UNLZ, 2C 2026)
 ## Integrantes
 
 - Emmanuel Balzi
-- Bruno — *(completar apellido)*
+- Bruno Klein
 
 ## Framework: Hornero
 
