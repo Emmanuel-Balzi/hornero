@@ -1,0 +1,18 @@
+# Compilados
+bin/
+out/
+*.class
+
+# Eclipse (se suben .project y .classpath, no la metadata del workspace)
+.metadata/
+.settings/
+.recommenders/
+
+# VS Code / IntelliJ
+.vscode/
+.idea/
+*.iml
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
