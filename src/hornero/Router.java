@@ -1,4 +1,3 @@
-
 package hornero;
 
 import java.util.HashMap;
@@ -6,42 +5,73 @@ import java.util.Map;
 
 public class Router {
 
-    // Guarda los recursos y las acciones disponibles para cada uno.
-    private final Map<String, Map<String, Accion>> rutas = new HashMap<>();
+    // Guarda las acciones de cada recurso.
+    private final Map<String, Map<String, Accion>> rutas =
+            new HashMap<>();
 
-    // Registra un controlador y todas las acciones que ofrece.
+    // Guarda los permisos de cada acción.
+    private final Map<String, Map<String, Rol>> permisos =
+            new HashMap<>();
+
+    // Registra un controlador y sus acciones.
     public void registrar(Controlador controlador) {
 
         Map<String, Accion> acciones = new HashMap<>();
+        Map<String, Rol> permisosControlador = new HashMap<>();
 
         controlador.registrarAcciones(acciones);
+        controlador.registrarPermisos(permisosControlador);
 
         rutas.put(controlador.getRecurso(), acciones);
+        permisos.put(controlador.getRecurso(), permisosControlador);
     }
 
-    // Busca el recurso y la acción correspondiente a una solicitud.
+    // Busca y ejecuta la acción correspondiente.
     public String despachar(Solicitud solicitud)
-            throws RutaNoEncontradaException {
+            throws HorneroException {
 
-        // Buscamos las acciones del recurso solicitado.
-        Map<String, Accion> acciones = rutas.get(solicitud.getRecurso());
+        Map<String, Accion> acciones =
+                rutas.get(solicitud.getRecurso());
 
         if (acciones == null) {
             throw new RutaNoEncontradaException(
-                "El recurso '" + solicitud.getRecurso() + "' no existe."
+                "El recurso '" + solicitud.getRecurso()
+                + "' no existe."
             );
         }
 
-        // Buscamos la acción dentro del recurso.
         Accion accion = acciones.get(solicitud.getAccion());
 
         if (accion == null) {
             throw new RutaNoEncontradaException(
-                "La acción '" + solicitud.getAccion() + "' no existe."
+                "La acción '" + solicitud.getAccion()
+                + "' no existe."
             );
         }
 
-        // Ejecutamos la acción y devolvemos su respuesta.
+        // Buscamos el rol requerido.
+        Map<String, Rol> permisosControlador =
+                permisos.get(solicitud.getRecurso());
+
+        Rol requerido = permisosControlador.getOrDefault(
+                solicitud.getAccion(),
+                Rol.USUARIO
+        );
+
+        // Comprobamos el rol de la sesión.
+        Sesion sesion = solicitud.getSesion();
+
+        Rol rolActual = sesion == null
+                ? Rol.INVITADO
+                : sesion.getRol();
+
+        if (!rolActual.alcanza(requerido)) {
+            throw new PermisoDenegadoException(
+                "No tenés permisos para realizar esta acción."
+            );
+        }
+
+        // Ejecutamos la acción.
         return accion.ejecutar(solicitud);
     }
 }
