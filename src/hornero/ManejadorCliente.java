@@ -24,6 +24,9 @@ public class ManejadorCliente implements Runnable {
         String cliente = socket.getRemoteSocketAddress().toString();
         System.out.println("[Hornero] Cliente conectado: " + cliente);
 
+        // Una sesión por conexión: arranca como INVITADO y muere con el hilo.
+        Sesion sesion = new Sesion();
+
         try (socket) {
             Comunicador comunicador =
                     new Comunicador(socket.getInputStream(), socket.getOutputStream());
@@ -31,7 +34,7 @@ public class ManejadorCliente implements Runnable {
             String linea;
 
             while ((linea = comunicador.recibir()) != null) {
-                comunicador.enviar(procesar(linea));
+                comunicador.enviar(procesar(linea, sesion));
             }
 
         } catch (IOException e) {
@@ -39,13 +42,16 @@ public class ManejadorCliente implements Runnable {
                     + cliente + ": " + e.getMessage());
         }
 
-        System.out.println("[Hornero] Cliente desconectado: " + cliente);
+        System.out.println("[Hornero] Cliente desconectado: " + cliente + " - " + sesion);
     }
 
-    private String procesar(String linea) {
+    private String procesar(String linea, Sesion sesion) {
         try {
             // Convertimos el texto recibido en una solicitud.
             Solicitud solicitud = parser.parsear(linea);
+
+            // Le pegamos la sesión de este cliente.
+            solicitud.setSesion(sesion);
 
             // Enviamos la solicitud al Router para ejecutar la acción.
             return router.despachar(solicitud);
