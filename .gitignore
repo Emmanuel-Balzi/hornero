@@ -5,7 +5,6 @@ out/
 
 # Eclipse (se suben .project y .classpath, no la metadata del workspace)
 .metadata/
-.settings/
 .recommenders/
 
 # VS Code / IntelliJ
