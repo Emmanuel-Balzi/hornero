@@ -1,0 +1,5 @@
+﻿Repositorio de GitHub: https://github.com/Emmanuel-Balzi/hornero
+
+Tecnologia Java - Trabajo Practico Final (UNLZ, 2C 2026)
+Framework: Hornero - Aplicacion: Turnos de Cancha
+Integrantes: Emmanuel Balzi, Bruno Klein
