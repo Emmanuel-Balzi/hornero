@@ -54,7 +54,9 @@ public class ManejadorCliente implements Runnable {
             solicitud.setSesion(sesion);
 
             // Enviamos la solicitud al Router para ejecutar la acción.
-            return router.despachar(solicitud);
+            // El framework arma la respuesta: "OK: ..." si salió bien,
+            // "ERROR: ..." (en los catch) si algo falló.
+            return "OK: " + router.despachar(solicitud);
 
         } catch (HorneroException e) {
             return "ERROR: " + e.getMessage();
