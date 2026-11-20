@@ -34,6 +34,11 @@ public class Main {
                 servicioTurnos
         );
 
+        contenedor.registrar(
+                ServicioUsuarios.class,
+                new ServicioUsuarios()
+        );
+
         // 4. Creamos el parser.
         ParserSolicitudes parser = new ParserSolicitudes();
 
@@ -41,6 +46,7 @@ public class Main {
         Router router = new Router();
 
         // 6. Registramos los controladores.
+        router.registrar(new ControladorSesion(contenedor));
         router.registrar(new ControladorCanchas(contenedor));
         router.registrar(new ControladorTurnos(contenedor));
 
