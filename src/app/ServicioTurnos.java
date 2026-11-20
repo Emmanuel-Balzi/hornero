@@ -3,103 +3,67 @@ package app;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Servicio encargado de administrar los turnos.
- */
+/** Servicio encargado de administrar los turnos compartidos. */
 public class ServicioTurnos {
 
     private final List<Turno> turnos = new ArrayList<>();
-
     private final ServicioCanchas servicioCanchas;
-
     private int siguienteId = 1;
 
     public ServicioTurnos(ServicioCanchas servicioCanchas) {
         this.servicioCanchas = servicioCanchas;
     }
 
-    /**
-     * Reserva una cancha en un horario determinado.
-     */
-    public synchronized Turno reservar(
-            int idCancha, int hora, String usuario) {
-
+    /** Reserva una cancha en una hora. La operación completa es atómica. */
+    public synchronized Turno reservar(int idCancha, int hora, String usuario) {
         if (!servicioCanchas.existe(idCancha)) {
-            throw new IllegalArgumentException(
-                "La cancha indicada no existe."
-            );
+            throw new IllegalArgumentException("La cancha indicada no existe.");
         }
 
-        for (Turno turno : turnos) {
-            if (turno.getIdCancha() == idCancha
-                    && turno.getHora() == hora) {
+        boolean ocupado = turnos.stream().anyMatch(turno ->
+                turno.getIdCancha() == idCancha && turno.getHora() == hora);
 
-                throw new IllegalArgumentException(
-                    "Ese horario ya está reservado."
-                );
-            }
+        if (ocupado) {
+            throw new IllegalArgumentException("Ese horario ya está reservado.");
         }
 
-        Turno nuevoTurno = new Turno(
-            siguienteId,
-            idCancha,
-            hora,
-            usuario
-        );
-
-        turnos.add(nuevoTurno);
-        siguienteId++;
-
-        return nuevoTurno;
+        Turno nuevo = new Turno(siguienteId++, idCancha, hora, usuario);
+        turnos.add(nuevo);
+        return nuevo;
     }
 
-    /**
-     * Busca un turno por su identificador.
-     */
     public synchronized Turno buscar(int idTurno) {
-
-        for (Turno turno : turnos) {
-            if (turno.getId() == idTurno) {
-                return turno;
-            }
-        }
-
-        return null;
+        return turnos.stream()
+                .filter(turno -> turno.getId() == idTurno)
+                .findFirst()
+                .orElse(null);
     }
 
     /**
-     * Cancela un turno.
+     * Cancela solamente si el turno existe y pertenece al usuario.
+     * La búsqueda, comprobación de dueño y eliminación ocurren bajo el mismo lock.
      */
-    public synchronized boolean cancelar(int idTurno) {
-
+    public synchronized boolean cancelar(int idTurno, String usuario) {
         Turno turno = buscar(idTurno);
 
         if (turno == null) {
             return false;
         }
 
+        if (!turno.getUsuario().equals(usuario)) {
+            throw new IllegalArgumentException(
+                    "No podés cancelar un turno de otro usuario.");
+        }
+
         return turnos.remove(turno);
     }
 
-    /**
-     * Devuelve los turnos de un usuario.
-     */
     public synchronized List<Turno> listarPorUsuario(String usuario) {
-
-        List<Turno> resultado = new ArrayList<>();
-
-        for (Turno turno : turnos) {
-            if (turno.getUsuario().equals(usuario)) {
-                resultado.add(turno);
-            }
-        }
-
-        return resultado;
+        return turnos.stream()
+                .filter(turno -> turno.getUsuario().equals(usuario))
+                .toList();
     }
 
-    /**
-     * Devuelve todos los turnos registrados.
-     */
     public synchronized List<Turno> listarTodos() {
         return new ArrayList<>(turnos);
     }
